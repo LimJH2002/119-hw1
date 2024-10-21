@@ -1,0 +1,24 @@
+q1,3
+q2,True
+q3a,False
+q4,['Massachusetts Institute of Technology (MIT)', 'University of Leeds', 'University of Birmingham', 'University of Oxford', 'Sungkyunkwan University(SKKU)']
+q5a,None
+q5b,[100, 100, 100, 100, 100, 100, 100, 100]
+q5c,800
+q6c,2
+q7,[9, 9, 9]
+q8a,29
+q9,[67.041, 67.68, 73.539, 82.147, 75.504]
+q10,5
+q11,Not Implemented
+q12,Not Implemented
+q13,Not Implemented
+q14a,Not Implemented
+q15,Not Implemented
+q16,Not Implemented
+q17,Not Implemented
+q18,Not Implemented
+q20a,Not Implemented
+q20b,Not Implemented
+q21,Not Implemented
+PART 1,11
