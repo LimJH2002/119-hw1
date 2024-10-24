@@ -1,7 +1,7 @@
 q1,3
 q2,True
 q3a,False
-q4,['The Chinese University of Hong Kong (CUHK)', 'Korea University', 'The University of Edinburgh', 'The Hong Kong University of Science and Technology', 'KU Leuven']
+q4,['The London School of Economics and Political Science (LSE)', 'New York University (NYU)', 'McGill University', 'Imperial College London', 'Harvard University']
 q5a,[100, 100, 100, 100, 100, 100, 100, 100]
 q5b,[100, 100, 100, 100, 100, 100, 100, 100]
 q5c,800

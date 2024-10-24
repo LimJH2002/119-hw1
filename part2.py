@@ -651,16 +651,73 @@ Create a new pipeline:
 
 
 def for_loop_pipeline(df):
-    # Input: the dataframe from load_input()
-    # Return a list of min, median, max, mean, and standard deviation
-    raise NotImplementedError
+    df_sorted = df.sort_values(['Entity', 'Year'])
+    yearly_changes = []
+
+    current_country = None
+    min_year = None
+    max_year = None
+    first_pop = None
+    last_pop = None
+
+    # Iterate through sorted dataframe
+    for _, row in df_sorted.iterrows():
+        if current_country != row['Entity']:
+            # Save previous country's data
+            if current_country is not None and min_year != max_year:
+                yearly_change = (last_pop - first_pop) / (max_year - min_year)
+                yearly_changes.append(yearly_change)
+
+            # Start new country
+            current_country = row['Entity']
+            min_year = row['Year']
+            max_year = row['Year']
+            first_pop = row['Population']
+            last_pop = row['Population']
+        else:
+            # Update the max values
+            max_year = row['Year']
+            last_pop = row['Population']
+
+    # Add last country
+    if min_year != max_year:
+        yearly_change = (last_pop - first_pop) / (max_year - min_year)
+        yearly_changes.append(yearly_change)
+
+    # Handle edge case: if no yearly changes could be calculated
+    if not yearly_changes:
+        # Return zeros
+        return [0, 0]
+
+    # Manually compute statistics
+    yearly_changes.sort()
+    n = len(yearly_changes)
+
+    min_val = yearly_changes[0]
+    max_val = yearly_changes[-1]
+
+    # Median
+    if n % 2 == 0:
+        median = (yearly_changes[n//2 - 1] + yearly_changes[n//2]) / 2
+    else:
+        median = yearly_changes[n//2]
+
+    # Mean
+    mean = sum(yearly_changes) / n
+
+    # Standard deviation
+    variance = sum((x - mean) ** 2 for x in yearly_changes) / n
+    std_dev = variance ** 0.5
+
+    return [min_val, median, max_val, mean, std_dev]
 
 
 def q11():
     # As your answer to this part, call load_input() and then
     # for_loop_pipeline() to return the 5 numbers.
     # (these should match the numbers you got in Q6.)
-    raise NotImplementedError
+    df = load_input("data/population.csv")
+    return for_loop_pipeline(df)
 
 
 """
@@ -672,19 +729,23 @@ As before, write 4 pipelines based on the datasets from Q7.
 
 
 def for_loop_small():
-    raise NotImplementedError
+    df = load_input_small()
+    return for_loop_pipeline(df)
 
 
 def for_loop_medium():
-    raise NotImplementedError
+    df = load_input_medium()
+    return for_loop_pipeline(df)
 
 
 def for_loop_large():
-    raise NotImplementedError
+    df = load_input_large()
+    return for_loop_pipeline(df)
 
 
 def for_loop_latency():
-    raise NotImplementedError
+    df = load_input_single_row()
+    return for_loop_pipeline(df)
 
 
 def q12():
@@ -709,17 +770,44 @@ b. Generate a plot in output/q13b.png of the latencies
 
 
 def q13a():
-    # Add all 6 pipelines for a throughput comparison
-    # Generate plot in ouptut/q13a.png
-    # Return list of 6 throughputs
-    raise NotImplementedError
+    h = ThroughputHelper()
+
+    # Add baseline pipelines
+    h.add_pipeline("baseline_small", len(POPULATION_SMALL), baseline_small)
+    h.add_pipeline("baseline_medium", len(POPULATION_MEDIUM), baseline_medium)
+    h.add_pipeline("baseline_large", len(POPULATION_LARGE), baseline_large)
+
+    # Add for-loop pipelines
+    h.add_pipeline("for_loop_small", len(POPULATION_SMALL), for_loop_small)
+    h.add_pipeline("for_loop_medium", len(POPULATION_MEDIUM), for_loop_medium)
+    h.add_pipeline("for_loop_large", len(POPULATION_LARGE), for_loop_large)
+
+    throughputs = h.compare_throughput()
+    h.generate_plot('output/q13a.png')
+
+    return [
+        throughputs[0],  # baseline_small
+        throughputs[1],  # baseline_medium
+        throughputs[2],  # baseline_large
+        throughputs[3],  # for_loop_small
+        throughputs[4],  # for_loop_medium
+        throughputs[5]   # for_loop_large
+    ]
 
 
 def q13b():
-    # Add 2 pipelines for a latency comparison
-    # Generate plot in ouptut/q13b.png
-    # Return list of 2 latencies
-    raise NotImplementedError
+    h = LatencyHelper()
+
+    h.add_pipeline("baseline_latency", baseline_latency)
+    h.add_pipeline("for_loop_latency", for_loop_latency)
+
+    latencies = h.compare_latency()
+    h.generate_plot('output/q13b.png')
+
+    return [
+        latencies[0],  # baseline_latency
+        latencies[1]   # for_loop_latency
+    ]
 
 
 """
@@ -729,20 +817,22 @@ Comment on the results you got!
 14a. Which pipelines is faster in terms of throughput?
 
 ===== ANSWER Q14a BELOW =====
-
+1. baseline_small, baseline_medium, baseline_large are faster than for_loop_small, for_loop_medium, for_loop_large
+2. The baseline pipelines are faster than the for-loop pipelines
 ===== END OF Q14a ANSWER =====
 
 14b. Which pipeline is faster in terms of latency?
 
 ===== ANSWER Q14b BELOW =====
-
+1. for_loop_latency is lower than baseline_latency
 ===== END OF Q14b ANSWER =====
 
 14c. Do you notice any other interesting observations?
 What does this experiment show?
 
 ===== ANSWER Q14c BELOW =====
-
+1. The throughput for baseline pipelines is close to 30 times more than for-loop pipelines
+2. The latency for for-loop pipeline is lower than baseline pipeline, which is not what I expected
 ===== END OF Q14c ANSWER =====
 """
 
@@ -755,7 +845,7 @@ Which factor that we tested (file vs. variable, vectorized vs. for loop)
 had the biggest impact on performance?
 
 ===== ANSWER Q15 BELOW =====
-
+1. vectorized vs for loop had the biggest impact on performance
 ===== END OF Q15 ANSWER =====
 
 16.
@@ -766,7 +856,7 @@ varies with the size of the input dataset.
 This is an open ended question.)
 
 ===== ANSWER Q16 BELOW =====
-
+1. The larger the size of the input dataset, the higher the throughput
 ===== END OF Q16 ANSWER =====
 
 17.
@@ -777,7 +867,8 @@ throughput is related to latency.
 This is an open ended question.)
 
 ===== ANSWER Q17 BELOW =====
-
+1. Throughput and latency are inversely related. Higher throughput results in lower latency
+2. The for-loop has lower latency than the vectorized pipeline is an exception I could not think of why
 ===== END OF Q17 ANSWER =====
 """
 
