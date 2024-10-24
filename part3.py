@@ -37,34 +37,57 @@ convert it to an integer and return it. You should get "12345".
 
 """
 
+import os
+import platform
+import subprocess
+
+import pandas as pd
 # You may need to conda install requests or pip3 install requests
 import requests
+
+import part2
+
 
 def download_file(url, filename):
     r = requests.get(url)
     with open(filename, 'wb') as f:
         f.write(r.content)
 
+
 def clone_repo(repo_url):
-    # TODO
-    raise NotImplementedError
+    subprocess.run(["git", "clone", repo_url])
+
 
 def run_script(script_path, data_path):
-    # TODO
-    raise NotImplementedError
+    subprocess.run(["python3", script_path, data_path])
+
 
 def setup(repo_url, data_url, script_path):
-    # TODO
-    raise NotImplementedError
+    # Download the data
+    data_filename = "input.txt"
+    download_file(data_url, data_filename)
+
+    # Clone the repository
+    clone_repo(repo_url)
+
+    # Run the script
+    run_script(script_path, data_filename)
+
 
 def q1():
     # Call setup as described in the prompt
-    # TODO
-    # Read the file test-output.txt to a string
-    # TODO
-    # Return the integer value of the output
-    # TODO
-    raise NotImplementedError
+    setup(
+        "https://github.com/DavisPL-Teaching/119-hw1",
+        "https://raw.githubusercontent.com/DavisPL-Teaching/119-hw1/refs/heads/main/data/test-input.txt",
+        "test-script.py"
+    )
+
+    # Read the output file
+    with open('output/test-output.txt', 'r') as f:
+        output = f.read().strip()
+
+    return int(output)
+
 
 """
 2.
@@ -76,13 +99,16 @@ a. When might you need to use a script like setup() above in
 this scenario?
 
 === ANSWER Q2a BELOW ===
-
+1. When onboarding new team members who need to get the project running
+2. When setting up automated testing environments
+3. When running periodic updates that require fresh data and code
 === END OF Q2a ANSWER ===
 
 Do you see an alternative to using a script like setup()?
 
 === ANSWER Q2b BELOW ===
-
+1. Using containerization (Docker) to package the entire environment
+2. Setting up continuous integration/deployment pipelines
 === END OF Q2b ANSWER ===
 
 3.
@@ -122,18 +148,23 @@ Hint: search for "import" in parts 1-3. Did you miss installing
 any packages?
 """
 
+
 def setup_for_new_machine():
-    # TODO
-    raise NotImplementedError
+    commands = [
+        ['pip3', 'install', 'pandas'],
+        ['pip3', 'install', 'numpy'],
+        ['pip3', 'install', 'matplotlib'],
+        ['pip3', 'install', 'requests'],
+        ['pip3', 'install', 'pytest'],
+    ]
+
+    for cmd in commands:
+        subprocess.run(cmd, check=True)
+
 
 def q3():
-    # As your answer, return a string containing
-    # the operating system name that you assumed the
-    # new machine to have.
-    # TODO
-    raise NotImplementedError
-    # os =
-    return os
+    return platform.system()
+
 
 """
 4. This question is open ended :)
@@ -145,7 +176,8 @@ scripts like setup() and setup_for_new_machine()
 in their day-to-day jobs?
 
 === ANSWER Q4 BELOW ===
-
+In larger-scale industry projects, data scientists likely spend a significant amount of time (30-50%) 
+on setup and configuration tasks
 === END OF Q4 ANSWER ===
 
 5. Extra credit
@@ -168,11 +200,8 @@ new machine:
 The shell can also be used to process data.
 
 This series of questions will be in the same style as part 2.
-Let's import the part2 module:
+Let's import the part2 module: (my autostyling moved the import to the top)
 """
-
-import part2
-import pandas as pd
 
 """
 Write two versions of a script that takes in the population.csv
@@ -206,21 +235,28 @@ Hints:
    (shell command that spits output) | wc -l
 """
 
+
 def pipeline_shell():
-    # TODO
-    raise NotImplementedError
-    # Return resulting integer
+    # Count total lines using tail to skip header
+    cmd = "cat data/population.csv | wc -l"
+    result = os.popen(cmd).read()
+    return int(result)
+
 
 def pipeline_pandas():
-    # TODO
-    raise NotImplementedError
-    # Return resulting integer
+    df = pd.read_csv('data/population.csv')
+    return df.shape[0]
+
 
 def q6():
-    # As your answer to this part, check that both
-    # integers are the same and return one of them.
-    # TODO
-    raise NotImplementedError
+    shell_count = pipeline_shell()
+    pandas_count = pipeline_pandas()
+
+    # The shell_count should now exactly match pandas_count
+    assert shell_count == pandas_count, f"Counts don't match: shell={
+        shell_count}, pandas={pandas_count}"
+    return shell_count
+
 
 """
 Let's do a performance comparison between the two methods.
@@ -232,30 +268,47 @@ from part 2 to get answers for both pipelines.
 7. Throughput
 """
 
+
 def q7():
     # Return a tuple of two floats
     # throughput for shell, throughput for pandas
     # (in rows per second)
-    # TODO
-    raise NotImplementedError
+    h = part2.ThroughputHelper()
+
+    # Add both pipelines
+    h.add_pipeline("shell", pipeline_shell(), pipeline_shell)
+    h.add_pipeline("pandas", pipeline_pandas(), pipeline_pandas)
+
+    throughputs = h.compare_throughput()
+    return (throughputs[0], throughputs[1])  # shell, pandas
+
 
 """
 8. Latency
 """
 
+
 def q8():
     # Return a tuple of two floats
     # latency for shell, latency for pandas
     # (in milliseconds)
-    # TODO
-    raise NotImplementedError
+    h = part2.LatencyHelper()
+
+    # Add both pipelines
+    h.add_pipeline("shell", pipeline_shell)
+    h.add_pipeline("pandas", pipeline_pandas)
+
+    latencies = h.compare_latency()
+    return (latencies[0], latencies[1])  # shell, pandas
+
 
 """
 9. Which method is faster?
 Comment on anything else you notice below.
 
 === ANSWER Q9 BELOW ===
-
+1. Throughput of the shell pipeline is faster than the pandas pipeline
+2. Latency of the shell pipeline is slower than the pandas pipeline
 === END OF Q9 ANSWER ===
 """
 
@@ -272,6 +325,7 @@ This will be run when you run the code.
 ANSWER_FILE = "output/part3-answers.txt"
 UNFINISHED = 0
 
+
 def log_answer(name, func, *args):
     try:
         answer = func(*args)
@@ -285,6 +339,7 @@ def log_answer(name, func, *args):
             f.write(f'{name},Not Implemented\n')
         global UNFINISHED
         UNFINISHED += 1
+
 
 def PART_3_PIPELINE():
     open(ANSWER_FILE, 'w').close()
@@ -306,6 +361,7 @@ def PART_3_PIPELINE():
         print("Warning: there are unfinished questions.")
 
     return UNFINISHED
+
 
 """
 === END OF PART 3 ===
